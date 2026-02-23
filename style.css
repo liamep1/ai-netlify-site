@@ -1,13 +1,57 @@
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f0f0f0;
+/* Design System */
+
+* Variables *
+:root {
+  --primary-color: #1f2937;
+  --secondary-color: #085a8d;
+  --background-color: #fff;
+  --text-color: #444;
+  --border-color: #eaf1fa;
+  --hover-bg: #f4f6fc;
 }
-h1 {
-    color: #333;
-    text-align: center;
+
+* Typography *
+typography {
+  font-family: 'Roboto', sans-serif;
+  line-height: 1.5;
+  color: var(--text-color);
 }
-p {
-    max-width: 800px;
-    margin: 0 auto;
-    line-height: 1.6;
+
+* Spacing *
+spacing {
+  @mixin base-spacing($size, $variant) {
+    --size-$variant: $size;
+  }
+  margin-variants {
+    @include base-spacing(0, 'margin-none');
+    @include base-spacing(1rem, 'margin-tiny');
+    @include base-spacing(2rem, 'margin-small');
+    @include base-spacing(3rem, 'margin-medium');
+    @include base-spacing(4rem, 'margin-large');
+  }
+  padding-variants {
+    @include base-spacing(1rem, 'padding-tiny');
+    @include base-spacing(2rem, 'padding-small');
+    @include base-spacing(3rem, 'padding-medium');
+    @include base-spacing(4rem, 'padding-large');
+  }
+}
+
+* Grid *
+grid {
+  grid-gap: var(--spacing-margin-medium);
+  grid-template-columns: repeat(auto-fit, minmax(var(--spacing-padding-small), 1fr));
+}
+
+* Buttons *
+b-button {
+  background-color: var(--primary-color);
+  color: var(--background-color);
+  border-radius: 5px;
+  font-family: 'Roboto', sans-serif;
+  padding: var(--spacing-margin-tiny) var(--spacing-padding-small);
+  text-decoration: none;
+}
+b-button:hover {
+  background-color: var(--hover-bg);
 }

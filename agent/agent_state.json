@@ -1,0 +1,33 @@
+{
+  "goal": "Lag en super profesjonell nettside med Home, About, Projects og Contact. Moderne design, responsive layout, god typografi, fine animasjoner, accessibility og SEO.",
+  "queue": [
+    "Bygg en profesjonell navbar + hero-seksjon med CTA.",
+    "Lag About-seksjon med fin layout og tekst.",
+    "Lag Projects-seksjon med prosjekt-kort og hover/focus states.",
+    "Lag Contact-seksjon med pent skjema (uten backend).",
+    "Gjør siden responsiv og ryddig på mobil.",
+    "Polish: tilgjengelighet (a11y), små animasjoner, ytelse og SEO-meta."
+  ],
+  "done": [],
+  "current": "Lag design-system i CSS: variabler, typografi, spacing, grid og knapper.",
+  "paused": false,
+  "pendingApproval": null,
+  "lastChatId": 8397356794,
+  "lastUpdate": "23.2.2026, 23:58:38",
+  "log": [
+    "23.2.2026, 23:58:29 — Nytt mål: Lag en super profesjonell nettside med Home, About, Projects og Contact. Moderne design, responsive layout, god typografi, fine animasjoner, accessibility og SEO.",
+    "23.2.2026, 23:58:38 — Starter oppgave: Lag design-system i CSS: variabler, typografi, spacing, grid og knapper."
+  ],
+  "snapshots": [
+    {
+      "id": "f79ce5c9-d000-4b39-9660-2dd75c8ea9da",
+      "at": "24.2.2026, 00:00:10",
+      "snap": {
+        "index.html": "<html>\n<head>\n    <title>Hjemmeside</title>\n    <link rel=\"stylesheet\" href=\"style.css\">\n</head>\n<body>\n    <h1 velkomsttekst\">Velkommen til vår hjemmeside</h1>\n    <p>Her er litt tekst om hva siden tar imot.</p>\n</body>\n</html>",
+        "style.css": "body {\n    font-family: Arial, sans-serif;\n    background-color: #f0f0f0;\n}\nh1 {\n    color: #333;\n    text-align: center;\n}\np {\n    max-width: 800px;\n    margin: 0 auto;\n    line-height: 1.6;\n}",
+        "script.js": "console.log('Dette er en enkel JavaScript fil for hjemmesiden')",
+        "package.json": null
+      }
+    }
+  ]
+}
