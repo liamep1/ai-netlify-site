@@ -1,3 +1,1 @@
-document.getElementById("btn").onclick = () => {
-  document.getElementById("out").textContent = "Det funker!";
-};
+console.log('Dette er en enkel JavaScript fil for hjemmesiden')
