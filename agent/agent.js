@@ -1,27 +1,66 @@
 const TelegramBot = require('node-telegram-bot-api');
 const axios = require('axios');
 const fs = require('fs');
-const { exec } = require('child_process');
 const path = require('path');
+const { exec } = require('child_process');
 
-const token = '8436996818:AAEC6V62w3Eijtm9xI5BZv6JeSiThnki2G4'; // <-- bytt denne
+const token = '8436996818:AAEC6V62w3Eijtm9xI5BZv6JeSiThnki2G4';
 const allowedUser = 8397356794;
-
 const projectPath = "C:/Users/liame/ai-netlify-site";
-const allowedFiles = ["index.html", "style.css", "script.js"];
 
 const bot = new TelegramBot(token, { polling: true });
 
-console.log("Agent startet...");
-bot.on('message', (msg) => {
-  console.log("Din Telegram user ID er:", msg.from.id);
-});
+let pendingAction = null;
+
+const safeNpmWhitelist = ["axios", "lodash", "date-fns"];
+
+function isSafePath(targetPath) {
+  const resolved = path.resolve(projectPath, targetPath);
+  return resolved.startsWith(path.resolve(projectPath));
+}
+
+function riskLevel(action) {
+
+  if (!action.type) return "red";
+
+  if (action.type === "run_shell") return "red";
+  if (action.path && !isSafePath(action.path)) return "red";
+
+  if (action.type === "run_npm_install") {
+    if (!safeNpmWhitelist.includes(action.package)) {
+      return "yellow";
+    }
+  }
+
+  if (action.type === "delete_folder") return "yellow";
+  if (action.type === "modify_package_json") return "yellow";
+
+  return "green";
+}
+
+function runGit(callback) {
+  exec(
+    `cd ${projectPath} && git add . && git commit -m "AI update" && git push`,
+    callback
+  );
+}
+
 bot.on('message', async (msg) => {
 
   if (msg.from.id !== allowedUser) return;
   if (!msg.text) return;
 
   const chatId = msg.chat.id;
+  const text = msg.text.trim();
+
+  if (pendingAction && text.toLowerCase() === "ja") {
+
+    const action = pendingAction;
+    pendingAction = null;
+
+    executeAction(action, chatId);
+    return;
+  }
 
   try {
 
@@ -33,57 +72,86 @@ bot.on('message', async (msg) => {
           {
             role: 'system',
             content: `
-Du returnerer kun JSON.
-Format:
+Returner kun JSON:
+
 {
-  "file": "index.html",
-  "content": "<full file content>"
+  "action": { ... }
 }
-Kun disse filene er lov:
-index.html
-style.css
-script.js
 `
           },
-          { role: 'user', content: msg.text }
+          { role: 'user', content: text }
         ],
         stream: false
       }
     );
 
     const aiText = aiResponse.data.message.content.trim();
-
     let command;
+
     try {
       command = JSON.parse(aiText);
-    } catch (e) {
-      console.log("AI svarte ikke med JSON:", aiText);
-      return bot.sendMessage(chatId, "AI returnerte ikke gyldig JSON.");
+    } catch {
+      return bot.sendMessage(chatId, "⚠️ AI returnerte ikke gyldig JSON.");
     }
 
-    if (!allowedFiles.includes(command.file)) {
-      return bot.sendMessage(chatId, "Ikke tillatt fil.");
+    const action = command.action;
+    const level = riskLevel(action);
+
+    if (level === "red") {
+      return bot.sendMessage(chatId, "⛔ Blokkert av sikkerhetsregler.");
     }
 
-    const filePath = path.join(projectPath, command.file);
+    if (level === "yellow") {
+      pendingAction = action;
+      return bot.sendMessage(chatId,
+        `⚠️ AI ønsker å utføre en risiko-handling:\n` +
+        `${JSON.stringify(action, null, 2)}\n\n` +
+        `Svar JA for å godkjenne.`
+      );
+    }
 
-    fs.writeFileSync(filePath, command.content);
-
-    exec(
-      `cd ${projectPath} && git add . && git commit -m "AI update" && git push`,
-      (error, stdout, stderr) => {
-
-        if (error) {
-          console.log(stderr);
-          return bot.sendMessage(chatId, "Git-feil.");
-        }
-
-        bot.sendMessage(chatId, "🚀 Deployet til Netlify.");
-      }
-    );
+    executeAction(action, chatId);
 
   } catch (err) {
     console.error(err);
-    bot.sendMessage(chatId, "⚠️ Feil.");
+    bot.sendMessage(chatId, "⚠️ Systemfeil.");
   }
 });
+
+function executeAction(action, chatId) {
+
+  let log = [];
+
+  const fullPath = action.path ? path.resolve(projectPath, action.path) : null;
+
+  switch (action.type) {
+
+    case "create_file":
+    case "modify_file":
+      fs.writeFileSync(fullPath, action.content);
+      log.push(`📄 ${action.type}: ${action.path}`);
+      break;
+
+    case "delete_file":
+      fs.unlinkSync(fullPath);
+      log.push(`🗑️ Slettet: ${action.path}`);
+      break;
+
+    case "run_npm_install":
+      exec(`cd ${projectPath} && npm install ${action.package}`, () => {});
+      log.push(`📦 npm install ${action.package}`);
+      break;
+
+    default:
+      log.push("⚠️ Ukjent action.");
+  }
+
+  runGit((error) => {
+    if (error) {
+      log.push("⚠️ Git-feil");
+    } else {
+      log.push("🚀 Deployet til Netlify");
+    }
+    bot.sendMessage(chatId, log.join("\n"));
+  });
+}
